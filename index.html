@@ -1,554 +1,84 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>SCD30 Log Analyzer V2</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SCD30 數據整理分析平台 V3</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-:root{
-  --bg:#f3f6fa; --card:#ffffff; --ink:#18212f; --muted:#667085; --line:#e4e7ec;
-  --primary:#2457d6; --primary2:#1f3f92; --success:#047857; --warn:#b54708; --danger:#b42318;
-  --soft:#f8fafc; --blueSoft:#eef4ff; --yellow:#fff8e6;
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}
-header{background:linear-gradient(135deg,#0f172a,#1d4ed8);color:#fff;padding:26px 20px}
-.wrap{max-width:1380px;margin:auto}
-h1{margin:0;font-size:28px}
-.subtitle{margin-top:6px;opacity:.86;font-size:14px}
-main{padding:20px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 8px 30px rgba(16,24,40,.05)}
-.grid{display:grid;gap:14px}
-.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
-.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
-@media(max-width:1000px){.g2,.g3,.g4{grid-template-columns:1fr}}
-.section-title{font-weight:800;font-size:17px;margin-bottom:12px}
-.drop{border:2px dashed #84adff;background:var(--blueSoft);padding:24px;border-radius:14px;text-align:center;cursor:pointer;transition:.2s}
-.drop.drag{background:#dbeafe;border-color:#2563eb}
-.drop strong{display:block;font-size:17px}
-.small{font-size:12px;color:var(--muted)}
-.note{padding:10px 12px;border-radius:10px;background:var(--yellow);color:#8a4b08;font-size:13px}
-.good{background:#ecfdf3;color:#067647}
-.bad{background:#fef3f2;color:#b42318}
-.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
-.field{display:flex;flex-direction:column;gap:5px;min-width:150px}
-.field.wide{min-width:220px}
-label{font-size:12px;font-weight:800;color:var(--muted)}
-input,select{padding:9px 10px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;min-height:40px}
-button{border:0;border-radius:9px;padding:10px 14px;font-weight:800;cursor:pointer}
-.primary{background:var(--primary);color:#fff}
-.secondary{background:#eaecf0;color:#344054}
-.success{background:var(--success);color:#fff}
-.danger{background:#fee4e2;color:#b42318}
-button:disabled{opacity:.45;cursor:not-allowed}
-.tabs{display:flex;flex-wrap:wrap;gap:8px}
-.tab{background:#eaecf0;color:#344054}
-.tab.active{background:var(--primary);color:#fff}
-.kpi{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:14px}
-.kpi .name{font-size:12px;color:var(--muted);font-weight:800}
-.kpi .value{font-size:23px;font-weight:900;margin-top:4px}
-.kpi .detail{font-size:12px;color:#475467;margin-top:5px}
-.pill{display:inline-block;padding:4px 9px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:12px;font-weight:800}
-.table-wrap{overflow:auto;max-height:430px;border:1px solid var(--line);border-radius:12px}
-table{border-collapse:collapse;width:100%;font-size:13px}
-th,td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}
-th{background:#f8fafc;position:sticky;top:0;z-index:1}
-.chart-card{height:330px}
-.chart-card canvas{max-height:275px}
-.hidden{display:none!important}
-.flex{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.between{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.mapping{margin-top:12px}
-.settings-row{display:grid;grid-template-columns:100px 1fr 1fr;gap:8px;align-items:center;margin:6px 0}
-.badge{font-size:11px;border-radius:999px;padding:3px 7px;background:#f2f4f7;color:#475467}
-hr{border:none;border-top:1px solid var(--line);margin:16px 0}
+:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#667085;--line:#e4e7ec;--primary:#2457d6;--green:#07875b;--red:#ef4444;--blue:#2563eb;--co2:#16a34a;--soft:#f8fafc}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}.wrap{max-width:1400px;margin:auto;padding:0 18px}header{padding:28px 0;background:linear-gradient(135deg,#0f172a,#1d4ed8);color:#fff}h1{margin:0;font-size:28px}.sub{margin-top:6px;font-size:14px;opacity:.88}main{padding:20px 0}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 8px 24px rgba(16,24,40,.05)}.grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}@media(max-width:1000px){.g2,.g3,.g4{grid-template-columns:1fr}}.between{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.controls{display:flex;align-items:end;gap:10px;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px;min-width:150px}.wide{min-width:230px}label,.small{font-size:12px;color:var(--muted)}label{font-weight:800}input,select{min-height:40px;padding:8px 10px;border:1px solid #d0d5dd;border-radius:9px;background:#fff}button{border:0;border-radius:9px;padding:10px 14px;font-weight:800;cursor:pointer}.primary{background:var(--primary);color:#fff}.secondary{background:#eaecf0;color:#344054}.success{background:var(--green);color:#fff}.danger{background:#fee4e2;color:#b42318}.drop{padding:24px;border:2px dashed #84adff;border-radius:14px;background:#eef4ff;text-align:center;cursor:pointer}.drop strong{display:block;font-size:17px}.drop.drag{background:#dbeafe}.section-title{font-size:17px;font-weight:900}.note{padding:10px 12px;border-radius:10px;background:#fff8e6;color:#8a4b08;font-size:13px}.good{background:#ecfdf3;color:#067647}.hidden{display:none!important}.tabs{display:flex;gap:8px;flex-wrap:wrap}.tab{background:#eaecf0;color:#344054}.tab.active{background:var(--primary);color:#fff}.kpi{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:14px}.kpi .name{font-size:12px;color:var(--muted);font-weight:800}.kpi .value{font-size:23px;font-weight:900;margin-top:4px}.kpi .detail{font-size:12px;color:#475467;margin-top:5px}.table-wrap{overflow:auto;max-height:430px;border:1px solid var(--line);border-radius:12px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}th{background:#f8fafc;position:sticky;top:0;z-index:1}.chart-card{height:330px}.chart-card canvas{max-height:275px}.pill,.badge{display:inline-block;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:800}.pill{background:#eef2ff;color:#3730a3}.badge{background:#f2f4f7;color:#475467}.light-row{display:grid;grid-template-columns:140px 1fr 1fr auto;gap:8px;align-items:end;margin:8px 0}@media(max-width:800px){.light-row{grid-template-columns:1fr}}hr{border:none;border-top:1px solid var(--line);margin:16px 0}
 </style>
 </head>
 <body>
-<header>
-  <div class="wrap">
-    <h1>SCD30 Log Analyzer V2</h1>
-    <div class="subtitle">多筆 CSV｜每日 / 整體 / 自訂時間｜光色分類｜10:00–22:00 快捷分析｜枋山內外比較｜異常事件｜Excel 匯出</div>
-  </div>
-</header>
-
+<header><div class="wrap"><h1>SCD30 數據整理分析平台 V3</h1><div class="sub">多筆 CSV｜24 小時制｜光色下拉設定｜實驗時段｜資料防呆｜枋山比較｜異常事件｜Excel 匯出</div></div></header>
 <main class="wrap">
-  <section class="grid g2">
-    <div class="card">
-      <div class="section-title">① SCD30 箱內資料</div>
-      <div id="scdDrop" class="drop">
-        <strong>拖曳多筆 SCD30 CSV</strong>
-        <span class="small">或點擊選擇，可一次多選</span>
-        <input id="scdInput" type="file" accept=".csv,text/csv" multiple hidden>
-      </div>
-      <div id="scdInfo" class="small" style="margin-top:9px">尚未載入。</div>
-      <div id="scdMap" class="mapping hidden">
-        <div class="controls">
-          <div class="field"><label>時間</label><select id="mTime"></select></div>
-          <div class="field"><label>溫度</label><select id="mTemp"></select></div>
-          <div class="field"><label>濕度</label><select id="mHum"></select></div>
-          <div class="field"><label>CO₂</label><select id="mCo2"></select></div>
-          <button id="applyScdMap" class="primary">套用欄位</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">② 枋山外部氣象資料</div>
-      <div id="wxDrop" class="drop">
-        <strong>拖曳多筆枋山 CSV</strong>
-        <span class="small">時間、外部溫度、外部濕度</span>
-        <input id="wxInput" type="file" accept=".csv,text/csv" multiple hidden>
-      </div>
-      <div id="wxInfo" class="small" style="margin-top:9px">可選，不匯入也能分析箱內資料。</div>
-      <div id="wxMap" class="mapping hidden">
-        <div class="controls">
-          <div class="field"><label>時間</label><select id="wTime"></select></div>
-          <div class="field"><label>溫度</label><select id="wTemp"></select></div>
-          <div class="field"><label>濕度</label><select id="wHum"></select></div>
-          <button id="applyWxMap" class="primary">套用欄位</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="card">
-    <div class="between">
-      <div class="section-title" style="margin:0">③ 實驗設定</div>
-      <div class="flex">
-        <span id="rowsPill" class="pill">0 筆箱內資料</span>
-        <button id="saveSettings" class="secondary">記住設定</button>
-        <button id="clearAll" class="danger">清除全部</button>
-      </div>
-    </div>
-
-    <div class="grid g2" style="margin-top:12px">
-      <div>
-        <strong>光色日期區間</strong>
-        <div class="settings-row"><span>黃光</span><input type="date" id="yellowStart" value="2026-07-15"><input type="date" id="yellowEnd" value="2026-07-24"></div>
-        <div class="settings-row"><span>藍光</span><input type="date" id="blueStart" value="2026-07-25"><input type="date" id="blueEnd" value="2026-07-31"></div>
-        <div class="settings-row"><span>綠光</span><input type="date" id="greenStart" value="2026-08-01"><input type="date" id="greenEnd" value="2026-08-07"></div>
-        <div class="settings-row"><span>紅光</span><input type="date" id="redStart" value="2026-08-08"><input type="date" id="redEnd" value="2026-08-14"></div>
-        <div class="settings-row"><span>暖白光</span><input type="date" id="warmStart"><input type="date" id="warmEnd"></div>
-      </div>
-      <div>
-        <strong>異常事件門檻</strong>
-        <div class="controls" style="margin-top:8px">
-          <div class="field"><label>CO₂ 單次突升 ≥ ppm</label><input id="thrCo2" type="number" value="300"></div>
-          <div class="field"><label>溫度單次變化 ≥ °C</label><input id="thrTemp" type="number" step="0.1" value="1.5"></div>
-          <div class="field"><label>濕度單次變化 ≥ %RH</label><input id="thrHum" type="number" step="0.1" value="8"></div>
-        </div>
-        <div class="note" style="margin-top:10px">異常事件是依相鄰紀錄的變化量判定，用來快速找回值得對照相機或熱像儀的時間點，不等同於蜂群「壓力」診斷。</div>
-      </div>
-    </div>
-  </section>
-
-  <section id="analysis" class="hidden">
-    <section class="card">
-      <div class="between">
-        <div class="tabs">
-          <button class="tab active" data-view="daily">每日</button>
-          <button class="tab" data-view="overall">整體時間</button>
-          <button class="tab" data-view="custom">自訂時間</button>
-          <button class="tab" data-view="experiment">10:00–22:00</button>
-        </div>
-        <button id="exportExcel" class="success">匯出 Excel</button>
-      </div>
-
-      <div id="dailyCtrl" class="controls" style="margin-top:12px">
-        <div class="field"><label>日期</label><select id="dateSel"></select></div>
-      </div>
-      <div id="customCtrl" class="controls hidden" style="margin-top:12px">
-        <div class="field wide"><label>開始</label><input id="customStart" type="datetime-local"></div>
-        <div class="field wide"><label>結束</label><input id="customEnd" type="datetime-local"></div>
-        <button id="applyCustom" class="primary">套用</button>
-      </div>
-      <div id="expCtrl" class="controls hidden" style="margin-top:12px">
-        <div class="field"><label>日期</label><select id="expDateSel"></select></div>
-        <span class="badge">只分析 10:00:00 ≤ 時間 &lt; 22:00:00</span>
-      </div>
-    </section>
-
-    <div class="grid g4">
-      <div class="kpi"><div class="name">光色</div><div id="lightKpi" class="value">—</div><div id="lightDetail" class="detail"></div></div>
-      <div class="kpi"><div class="name">溫度平均</div><div id="tempKpi" class="value">—</div><div id="tempDetail" class="detail"></div></div>
-      <div class="kpi"><div class="name">濕度平均</div><div id="humKpi" class="value">—</div><div id="humDetail" class="detail"></div></div>
-      <div class="kpi"><div class="name">CO₂ 平均</div><div id="co2Kpi" class="value">—</div><div id="co2Detail" class="detail"></div></div>
-    </div>
-
-    <section class="card">
-      <div class="between"><div class="section-title" style="margin:0">最高 / 最低與發生時間</div><div id="rangeLabel" class="small"></div></div>
-      <div class="table-wrap" style="margin-top:10px">
-        <table><thead><tr><th>指標</th><th>平均</th><th>最高</th><th>最高時間</th><th>最低</th><th>最低時間</th></tr></thead><tbody id="statBody"></tbody></table>
-      </div>
-    </section>
-
-    <div class="grid g3">
-      <section class="card chart-card"><strong>溫度趨勢</strong><canvas id="tempChart"></canvas></section>
-      <section class="card chart-card"><strong>濕度趨勢</strong><canvas id="humChart"></canvas></section>
-      <section class="card chart-card"><strong>CO₂ 趨勢</strong><canvas id="co2Chart"></canvas></section>
-    </div>
-
-    <section class="card">
-      <div class="between">
-        <div class="section-title" style="margin:0">④ 所有日期每日摘要</div>
-        <span class="small">自動加入光色、ΔT、ΔRH</span>
-      </div>
-      <div class="table-wrap" style="margin-top:10px">
-        <table>
-          <thead><tr>
-            <th>日期</th><th>光色</th>
-            <th>溫度平均</th><th>最高</th><th>時間</th><th>最低</th><th>時間</th>
-            <th>濕度平均</th><th>最高</th><th>時間</th><th>最低</th><th>時間</th>
-            <th>CO₂平均</th><th>最高</th><th>時間</th><th>最低</th><th>時間</th>
-            <th>枋山平均溫度</th><th>ΔT</th><th>枋山平均濕度</th><th>ΔRH</th>
-          </tr></thead>
-          <tbody id="dailyBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="between">
-        <div class="section-title" style="margin:0">⑤ 多日疊圖比較</div>
-        <div class="controls">
-          <div class="field"><label>指標</label><select id="overlayMetric"><option value="temp">溫度</option><option value="hum">濕度</option><option value="co2">CO₂</option></select></div>
-          <div class="field"><label>日期從</label><select id="overlayStart"></select></div>
-          <div class="field"><label>到</label><select id="overlayEnd"></select></div>
-          <button id="drawOverlay" class="primary">更新疊圖</button>
-        </div>
-      </div>
-      <div class="chart-card" style="height:380px;margin-top:10px"><canvas id="overlayChart"></canvas></div>
-    </section>
-
-    <section class="card">
-      <div class="between">
-        <div class="section-title" style="margin:0">⑥ 箱內 vs 枋山</div>
-        <span id="wxStatus" class="small">尚未匯入枋山資料</span>
-      </div>
-      <div class="grid g2" style="margin-top:10px">
-        <div class="chart-card"><strong>溫度內外比較</strong><canvas id="compareTemp"></canvas></div>
-        <div class="chart-card"><strong>濕度內外比較</strong><canvas id="compareHum"></canvas></div>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="between">
-        <div class="section-title" style="margin:0">⑦ 異常事件</div>
-        <span id="eventCount" class="pill">0 筆</span>
-      </div>
-      <div class="table-wrap" style="margin-top:10px">
-        <table><thead><tr><th>時間</th><th>光色</th><th>類型</th><th>前值</th><th>目前值</th><th>變化量</th><th>來源檔案</th></tr></thead><tbody id="eventBody"></tbody></table>
-      </div>
-    </section>
-  </section>
+<section class="grid g2">
+<div class="card"><div class="section-title">① SCD30 箱內資料</div><div id="scdDrop" class="drop"><strong>拖曳多筆 SCD30 CSV</strong><span class="small">或點擊選擇，可一次多選</span><input id="scdInput" type="file" accept=".csv,text/csv" multiple hidden></div><div id="scdInfo" class="small" style="margin-top:9px">尚未載入。</div><div id="scdMap" class="controls hidden" style="margin-top:12px"><div class="field"><label>時間</label><select id="mTime"></select></div><div class="field"><label>溫度</label><select id="mTemp"></select></div><div class="field"><label>濕度</label><select id="mHum"></select></div><div class="field"><label>CO₂</label><select id="mCo2"></select></div><button id="applyScdMap" class="primary">套用欄位</button></div></div>
+<div class="card"><div class="section-title">② 枋山外部氣象資料</div><div id="wxDrop" class="drop"><strong>拖曳多筆枋山 CSV</strong><span class="small">可選：時間、外部溫度、外部濕度</span><input id="wxInput" type="file" accept=".csv,text/csv" multiple hidden></div><div id="wxInfo" class="small" style="margin-top:9px">未匯入也可分析箱內資料。</div><div id="wxMap" class="controls hidden" style="margin-top:12px"><div class="field"><label>時間</label><select id="wTime"></select></div><div class="field"><label>溫度</label><select id="wTemp"></select></div><div class="field"><label>濕度</label><select id="wHum"></select></div><button id="applyWxMap" class="primary">套用欄位</button></div></div>
+</section>
+<section class="card"><div class="between"><div class="section-title">③ 實驗設定</div><div class="controls"><span id="rowsPill" class="pill">0 筆箱內資料</span><button id="saveSettings" class="secondary">記住設定</button><button id="clearAll" class="danger">清除資料</button></div></div><div class="grid g2" style="margin-top:14px"><div><strong>光色日期區間</strong><div class="small" style="margin:6px 0">不預設日期；每列用下拉選單指定光色。</div><div id="lightRows"></div><button id="addLight" class="secondary" type="button">＋ 新增光色區間</button></div><div><strong>LED 實驗時段</strong><div class="controls" style="margin-top:8px"><div class="field"><label>開始</label><input id="expStart" type="time" value="10:00"></div><div class="field"><label>結束</label><input id="expEnd" type="time" value="22:00"></div></div><div class="note good" style="margin-top:10px">SCD30 仍保留全天資料；實驗時段只用於篩選分析。</div><hr><strong>資料防呆範圍</strong><div class="controls" style="margin-top:8px"><div class="field"><label>溫度 °C</label><div><input id="tMin" type="number" value="-10" style="width:76px"> ～ <input id="tMax" type="number" value="60" style="width:76px"></div></div><div class="field"><label>濕度 %RH</label><div><input id="hMin" type="number" value="0" style="width:76px"> ～ <input id="hMax" type="number" value="100" style="width:76px"></div></div><div class="field"><label>CO₂ ppm</label><div><input id="cMin" type="number" value="0" style="width:84px"> ～ <input id="cMax" type="number" value="20000" style="width:84px"></div></div></div><div id="quality" class="note" style="margin-top:10px">尚未匯入資料</div><hr><strong>異常事件門檻</strong><div class="controls" style="margin-top:8px"><div class="field"><label>CO₂ 突升 ≥ ppm</label><input id="thrC" type="number" value="300"></div><div class="field"><label>溫度變化 ≥ °C</label><input id="thrT" type="number" step="0.1" value="1.5"></div><div class="field"><label>濕度變化 ≥ %RH</label><input id="thrH" type="number" step="0.1" value="8"></div></div></div></div></section>
+<section id="analysis" class="hidden">
+<section class="card"><div class="between"><div class="tabs"><button class="tab active" data-view="daily">每日</button><button class="tab" data-view="overall">整體時間</button><button class="tab" data-view="custom">自訂時間</button><button class="tab" data-view="experiment">實驗時段</button></div><div class="controls"><span id="excelStatus" class="small">檢查 Excel 模組中…</span><button id="exportExcel" class="success">匯出 Excel</button></div></div><div id="dailyCtrl" class="controls" style="margin-top:12px"><div class="field"><label>日期</label><select id="dateSel"></select></div></div><div id="customCtrl" class="controls hidden" style="margin-top:12px"><div class="field wide"><label>開始</label><input id="customStart" type="datetime-local"></div><div class="field wide"><label>結束</label><input id="customEnd" type="datetime-local"></div><button id="applyCustom" class="primary">套用</button></div><div id="expCtrl" class="controls hidden" style="margin-top:12px"><div class="field"><label>日期</label><select id="expDateSel"></select></div><span id="expBadge" class="badge"></span></div></section>
+<div class="grid g4"><div class="kpi"><div class="name">光色</div><div id="lightKpi" class="value">—</div><div id="lightDetail" class="detail"></div></div><div class="kpi"><div class="name">溫度平均</div><div id="tempKpi" class="value">—</div><div id="tempDetail" class="detail"></div></div><div class="kpi"><div class="name">濕度平均</div><div id="humKpi" class="value">—</div><div id="humDetail" class="detail"></div></div><div class="kpi"><div class="name">CO₂ 平均</div><div id="co2Kpi" class="value">—</div><div id="co2Detail" class="detail"></div></div></div>
+<section class="card"><div class="between"><div class="section-title">最高 / 最低與發生時間</div><div id="rangeLabel" class="small"></div></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>指標</th><th>平均</th><th>最高</th><th>最高時間</th><th>最低</th><th>最低時間</th></tr></thead><tbody id="statBody"></tbody></table></div></section>
+<div class="grid g3"><section class="card chart-card"><strong>溫度趨勢</strong><canvas id="tempChart"></canvas></section><section class="card chart-card"><strong>濕度趨勢</strong><canvas id="humChart"></canvas></section><section class="card chart-card"><strong>CO₂ 趨勢</strong><canvas id="co2Chart"></canvas></section></div>
+<section class="card"><div class="between"><div class="section-title">④ 每日實驗時段摘要</div><span class="small">依自訂 LED 時段統計</span></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>日期</th><th>光色</th><th>筆數</th><th>溫度平均</th><th>溫度最高</th><th>最高時間</th><th>溫度最低</th><th>最低時間</th><th>濕度平均</th><th>CO₂平均</th><th>枋山溫度</th><th>ΔT</th><th>枋山濕度</th><th>ΔRH</th></tr></thead><tbody id="dailyBody"></tbody></table></div></section>
+<section class="card"><div class="between"><div><div class="section-title">⑤ 多日期疊圖</div><div class="small">光色固定色票：黃／藍／綠／紅／暖白</div></div><div class="controls"><div class="field"><label>指標</label><select id="overlayMetric"><option value="temp">溫度</option><option value="hum">濕度</option><option value="co2">CO₂</option></select></div><div class="field"><label>開始日期</label><input id="overlayStart" type="date"></div><div class="field"><label>結束日期</label><input id="overlayEnd" type="date"></div><button id="drawOverlay" class="primary">繪圖</button></div></div><div style="height:420px;margin-top:10px"><canvas id="overlayChart"></canvas></div></section>
+<div class="grid g2"><section class="card chart-card"><div class="section-title">⑥ 箱內 vs 枋山溫度</div><canvas id="cmpTemp"></canvas></section><section class="card chart-card"><div class="section-title">箱內 vs 枋山濕度</div><canvas id="cmpHum"></canvas></section></div>
+<section class="card"><div class="between"><div class="section-title">⑦ 異常事件</div><span id="eventCount" class="pill">0 筆</span></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>時間</th><th>光色</th><th>類型</th><th>前值</th><th>目前值</th><th>變化量</th><th>來源檔案</th></tr></thead><tbody id="eventBody"></tbody></table></div></section>
+</section>
 </main>
-
 <script>
-const $=id=>document.getElementById(id);
-const S={
- scdTables:[],wxTables:[],scdRows:[],wxRows:[],scdHeaders:[],wxHeaders:[],
- scdMap:{time:null,temp:null,hum:null,co2:null},wxMap:{time:null,temp:null,hum:null},
- view:'daily', charts:{}
-};
-
-function bindDrop(zoneId,inputId,handler){
- const z=$(zoneId),i=$(inputId);
- z.onclick=()=>i.click();
- z.ondragover=e=>{e.preventDefault();z.classList.add('drag')};
- z.ondragleave=()=>z.classList.remove('drag');
- z.ondrop=e=>{e.preventDefault();z.classList.remove('drag');handler([...e.dataTransfer.files])};
- i.onchange=e=>handler([...e.target.files]);
-}
-bindDrop('scdDrop','scdInput',files=>loadFiles(files,'scd'));
-bindDrop('wxDrop','wxInput',files=>loadFiles(files,'wx'));
-
-function delimiter(line){
- const cs=[',',';','\t'];
- return cs.map(d=>[d,(line.split(d).length-1)]).sort((a,b)=>b[1]-a[1])[0][0];
-}
-function parseCSV(text){
- text=text.replace(/^\uFEFF/,'');
- const lines=text.split(/\r?\n/).filter(x=>x.trim()!=='');
- if(!lines.length)return{headers:[],rows:[]};
- const d=delimiter(lines[0]);
- const parse=line=>{
-   const a=[];let cur='',q=false;
-   for(let n=0;n<line.length;n++){
-     const ch=line[n];
-     if(ch==='"'){if(q&&line[n+1]==='"'){cur+='"';n++}else q=!q}
-     else if(ch===d&&!q){a.push(cur.trim());cur=''}
-     else cur+=ch;
-   }
-   a.push(cur.trim());return a;
- };
- const headers=parse(lines[0]);
- return{headers,rows:lines.slice(1).map(parse).filter(r=>r.some(v=>v!==''))};
-}
-function norm(s){return String(s||'').toLowerCase().replace(/\s+/g,'').replace(/[()_\-/%]/g,'')}
-function findHeader(headers,patterns){
- for(const h of headers){const n=norm(h);if(patterns.some(p=>n.includes(p)))return h}
- return null;
-}
-function autoMap(headers,type){
- if(type==='scd')return{
-   time:findHeader(headers,['timestamp','datetime','日期時間','時間','time','date']),
-   temp:findHeader(headers,['temperature','temp','溫度']),
-   hum:findHeader(headers,['humidity','humid','rh','濕度']),
-   co2:findHeader(headers,['co2','二氧化碳','carbon'])
- };
- return{
-   time:findHeader(headers,['timestamp','datetime','日期時間','時間','time','date']),
-   temp:findHeader(headers,['temperature','temp','氣溫','溫度']),
-   hum:findHeader(headers,['humidity','humid','rh','濕度'])
- };
-}
-async function loadFiles(files,type){
- const csvs=files.filter(f=>f.name.toLowerCase().endsWith('.csv'));
- if(!csvs.length){alert('請選擇 CSV 檔案');return}
- const tables=[];
- for(const f of csvs){tables.push({file:f.name,...parseCSV(await f.text())})}
- const headers=[...new Set(tables.flatMap(t=>t.headers))];
- if(type==='scd'){
-   S.scdTables=tables;S.scdHeaders=headers;S.scdMap=autoMap(headers,'scd');
-   fillMap('scd');buildScd();
- }else{
-   S.wxTables=tables;S.wxHeaders=headers;S.wxMap=autoMap(headers,'wx');
-   fillMap('wx');buildWx();
- }
-}
-function fillSelect(id,headers,value){
- const s=$(id);s.innerHTML='<option value="">-- 選擇 --</option>'+headers.map(h=>`<option>${h}</option>`).join('');
- s.value=value||'';
-}
-function fillMap(type){
- if(type==='scd'){
-   fillSelect('mTime',S.scdHeaders,S.scdMap.time);fillSelect('mTemp',S.scdHeaders,S.scdMap.temp);
-   fillSelect('mHum',S.scdHeaders,S.scdMap.hum);fillSelect('mCo2',S.scdHeaders,S.scdMap.co2);$('scdMap').classList.remove('hidden');
- }else{
-   fillSelect('wTime',S.wxHeaders,S.wxMap.time);fillSelect('wTemp',S.wxHeaders,S.wxMap.temp);fillSelect('wHum',S.wxHeaders,S.wxMap.hum);$('wxMap').classList.remove('hidden');
- }
-}
-$('applyScdMap').onclick=()=>{S.scdMap={time:$('mTime').value,temp:$('mTemp').value,hum:$('mHum').value,co2:$('mCo2').value};buildScd()};
-$('applyWxMap').onclick=()=>{S.wxMap={time:$('wTime').value,temp:$('wTemp').value,hum:$('wHum').value};buildWx()};
-
-function parseDate(v){
- if(v==null||v==='')return null;
- let s=String(v).trim(),m;
- m=s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})[ T](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);
- if(m)return new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0));
- m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})[ T](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);
- if(m)return new Date(+m[3],+m[1]-1,+m[2],+m[4],+m[5],+(m[6]||0));
- const d=new Date(s);return isNaN(d)?null:d;
-}
-function num(v){
- if(v==null||v==='')return null;
- const n=Number(String(v).replace(',','.').replace(/[^\d.\-]/g,''));
- return Number.isFinite(n)?n:null;
-}
-function rowFromTable(t,map,type){
- const idx={};for(const [k,h] of Object.entries(map))idx[k]=t.headers.indexOf(h);
- return t.rows.map(r=>{
-   const time=parseDate(r[idx.time]); if(!time)return null;
-   if(type==='scd')return{time,temp:num(r[idx.temp]),hum:num(r[idx.hum]),co2:num(r[idx.co2]),file:t.file};
-   return{time,temp:num(r[idx.temp]),hum:num(r[idx.hum]),file:t.file};
- }).filter(Boolean);
-}
-function validMap(map){return Object.values(map).every(Boolean)}
-function buildScd(){
- if(!validMap(S.scdMap)){$('scdInfo').textContent='已讀取檔案，但需要指定欄位。';return}
- S.scdRows=S.scdTables.flatMap(t=>rowFromTable(t,S.scdMap,'scd')).sort((a,b)=>a.time-b.time);
- $('scdInfo').textContent=`已載入 ${S.scdTables.length} 個 CSV，共 ${S.scdRows.length.toLocaleString()} 筆有效紀錄。`;
- $('rowsPill').textContent=`${S.scdRows.length.toLocaleString()} 筆箱內資料`;
- if(S.scdRows.length){$('analysis').classList.remove('hidden');setupDateControls();renderAll();}
-}
-function buildWx(){
- if(!validMap(S.wxMap)){$('wxInfo').textContent='已讀取檔案，但需要指定欄位。';return}
- S.wxRows=S.wxTables.flatMap(t=>rowFromTable(t,S.wxMap,'wx')).sort((a,b)=>a.time-b.time);
- $('wxInfo').textContent=`已載入 ${S.wxTables.length} 個 CSV，共 ${S.wxRows.length.toLocaleString()} 筆有效紀錄。`;
- $('wxStatus').textContent=`枋山資料 ${S.wxRows.length.toLocaleString()} 筆`;
- renderAll();
-}
-function ymd(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
-function dt(d){return d?`${ymd(d)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`:'—'}
-function localInput(d){const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}
-
-function getColor(dateStr){
- const ranges=[
-   ['黃光','yellowStart','yellowEnd'],['藍光','blueStart','blueEnd'],['綠光','greenStart','greenEnd'],['紅光','redStart','redEnd'],['暖白光','warmStart','warmEnd']
- ];
- for(const [name,s,e] of ranges){if($(s).value&&$(e).value&&dateStr>=$(s).value&&dateStr<=$(e).value)return name}
- return '未設定';
-}
-function setupDateControls(){
- const dates=[...new Set(S.scdRows.map(r=>ymd(r.time)))];
- for(const id of ['dateSel','expDateSel','overlayStart','overlayEnd'])$(id).innerHTML=dates.map(d=>`<option>${d}</option>`).join('');
- if(dates.length){$('overlayEnd').value=dates[dates.length-1];$('customStart').value=localInput(S.scdRows[0].time);$('customEnd').value=localInput(S.scdRows[S.scdRows.length-1].time)}
-}
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
- document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');S.view=b.dataset.view;
- $('dailyCtrl').classList.toggle('hidden',S.view!=='daily');$('customCtrl').classList.toggle('hidden',S.view!=='custom');$('expCtrl').classList.toggle('hidden',S.view!=='experiment');renderCurrent();
-});
-$('dateSel').onchange=renderCurrent;$('expDateSel').onchange=renderCurrent;$('applyCustom').onclick=renderCurrent;
-['yellowStart','yellowEnd','blueStart','blueEnd','greenStart','greenEnd','redStart','redEnd','warmStart','warmEnd','thrCo2','thrTemp','thrHum'].forEach(id=>$(id).onchange=renderAll);
-
-function currentRows(){
- if(S.view==='overall')return S.scdRows;
- if(S.view==='daily'){const d=$('dateSel').value;return S.scdRows.filter(r=>ymd(r.time)===d)}
- if(S.view==='experiment'){
-   const d=$('expDateSel').value;return S.scdRows.filter(r=>ymd(r.time)===d&&r.time.getHours()>=10&&r.time.getHours()<22);
- }
- const a=new Date($('customStart').value),b=new Date($('customEnd').value);return S.scdRows.filter(r=>r.time>=a&&r.time<=b);
-}
-function stats(rows,key){
- const v=rows.filter(r=>r[key]!=null&&Number.isFinite(r[key]));
- if(!v.length)return{avg:null,max:null,min:null,maxT:null,minT:null};
- let max=v[0],min=v[0],sum=0;for(const r of v){sum+=r[key];if(r[key]>max[key])max=r;if(r[key]<min[key])min=r}
- return{avg:sum/v.length,max:max[key],min:min[key],maxT:max.time,minT:min.time};
-}
-function fm(k,v){
- if(v==null)return '—';if(k==='co2')return `${v.toFixed(0)} ppm`;if(k==='temp')return `${v.toFixed(2)} °C`;return `${v.toFixed(2)} %RH`;
-}
-function sample(rows,n=2600){if(rows.length<=n)return rows;const s=rows.length/n;return Array.from({length:n},(_,i)=>rows[Math.floor(i*s)])}
-function chart(name,canvas,labels,datasets,ytitle){
- if(S.charts[name])S.charts[name].destroy();
- S.charts[name]=new Chart($(canvas),{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},elements:{point:{radius:0}},scales:{x:{ticks:{maxTicksLimit:7}},y:{title:{display:true,text:ytitle}}}}});
-}
-function renderCurrent(){
- const rows=currentRows();if(!rows.length){$('rangeLabel').textContent='此區間沒有資料';return}
- const t=stats(rows,'temp'),h=stats(rows,'hum'),c=stats(rows,'co2'),date=ymd(rows[0].time);
- $('lightKpi').textContent=getColor(date);$('lightDetail').textContent=S.view==='overall'?'整體期間可能包含多種光色':date;
- $('tempKpi').textContent=fm('temp',t.avg);$('tempDetail').textContent=`最高 ${fm('temp',t.max)}｜最低 ${fm('temp',t.min)}`;
- $('humKpi').textContent=fm('hum',h.avg);$('humDetail').textContent=`最高 ${fm('hum',h.max)}｜最低 ${fm('hum',h.min)}`;
- $('co2Kpi').textContent=fm('co2',c.avg);$('co2Detail').textContent=`最高 ${fm('co2',c.max)}｜最低 ${fm('co2',c.min)}`;
- $('rangeLabel').textContent=`${dt(rows[0].time)} ～ ${dt(rows[rows.length-1].time)}｜${rows.length.toLocaleString()} 筆`;
- const M=[['temp','溫度',t],['hum','濕度',h],['co2','CO₂',c]];
- $('statBody').innerHTML=M.map(([k,n,s])=>`<tr><td><b>${n}</b></td><td>${fm(k,s.avg)}</td><td>${fm(k,s.max)}</td><td>${dt(s.maxT)}</td><td>${fm(k,s.min)}</td><td>${dt(s.minT)}</td></tr>`).join('');
- const sr=sample(rows),labels=sr.map(r=>dt(r.time));
- chart('temp','tempChart',labels,[{label:'箱內溫度',data:sr.map(r=>r.temp),borderWidth:1.5}], '°C');
- chart('hum','humChart',labels,[{label:'箱內濕度',data:sr.map(r=>r.hum),borderWidth:1.5}], '%RH');
- chart('co2','co2Chart',labels,[{label:'CO₂',data:sr.map(r=>r.co2),borderWidth:1.5}], 'ppm');
-}
-function avgWindow(rows,key){const v=rows.map(r=>r[key]).filter(Number.isFinite);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
-function nearestWxDay(d){
- const rs=S.wxRows.filter(r=>ymd(r.time)===d&&r.time.getHours()>=10&&r.time.getHours()<22);
- return{temp:avgWindow(rs,'temp'),hum:avgWindow(rs,'hum')};
-}
-function dailySummaries(){
- const groups={};for(const r of S.scdRows){const d=ymd(r.time);(groups[d]??=[]).push(r)}
- return Object.keys(groups).sort().map(d=>{
-   const rows=groups[d].filter(r=>r.time.getHours()>=10&&r.time.getHours()<22),t=stats(rows,'temp'),h=stats(rows,'hum'),c=stats(rows,'co2'),w=nearestWxDay(d);
-   return{date:d,color:getColor(d),t,h,c,wxT:w.temp,wxH:w.hum,dT:(t.avg!=null&&w.temp!=null)?t.avg-w.temp:null,dRH:(h.avg!=null&&w.hum!=null)?h.avg-w.hum:null,count:rows.length};
- });
-}
-function renderDaily(){
- const ds=dailySummaries();
- $('dailyBody').innerHTML=ds.map(x=>`<tr>
- <td>${x.date}</td><td>${x.color}</td>
- <td>${fm('temp',x.t.avg)}</td><td>${fm('temp',x.t.max)}</td><td>${dt(x.t.maxT)}</td><td>${fm('temp',x.t.min)}</td><td>${dt(x.t.minT)}</td>
- <td>${fm('hum',x.h.avg)}</td><td>${fm('hum',x.h.max)}</td><td>${dt(x.h.maxT)}</td><td>${fm('hum',x.h.min)}</td><td>${dt(x.h.minT)}</td>
- <td>${fm('co2',x.c.avg)}</td><td>${fm('co2',x.c.max)}</td><td>${dt(x.c.maxT)}</td><td>${fm('co2',x.c.min)}</td><td>${dt(x.c.minT)}</td>
- <td>${x.wxT==null?'—':x.wxT.toFixed(2)}</td><td>${x.dT==null?'—':x.dT.toFixed(2)}</td><td>${x.wxH==null?'—':x.wxH.toFixed(2)}</td><td>${x.dRH==null?'—':x.dRH.toFixed(2)}</td>
- </tr>`).join('');
-}
-function renderOverlay(){
- const metric=$('overlayMetric').value,a=$('overlayStart').value,b=$('overlayEnd').value;
- const dates=[...new Set(S.scdRows.map(r=>ymd(r.time)))].filter(d=>d>=a&&d<=b);
- const unit=metric==='temp'?'°C':metric==='hum'?'%RH':'ppm';
- const datasets=dates.map(d=>{
-   const rows=S.scdRows.filter(r=>ymd(r.time)===d&&r.time.getHours()>=10&&r.time.getHours()<22);
-   return{label:`${d} ${getColor(d)}`,data:rows.map(r=>({x:`${String(r.time.getHours()).padStart(2,'0')}:${String(r.time.getMinutes()).padStart(2,'0')}:${String(r.time.getSeconds()).padStart(2,'0')}`,y:r[metric]})),borderWidth:1.2};
- });
- const labels=[...new Set(datasets.flatMap(s=>s.data.map(p=>p.x)))].sort();
- const aligned=datasets.map(ds=>{const m=Object.fromEntries(ds.data.map(p=>[p.x,p.y]));return{label:ds.label,data:labels.map(x=>m[x]??null),borderWidth:1.2,spanGaps:true}});
- chart('overlay','overlayChart',labels,aligned,unit);
-}
-$('drawOverlay').onclick=renderOverlay;$('overlayMetric').onchange=renderOverlay;
-
-function avgSeriesByMinute(rows,key){
- const m={};for(const r of rows){const k=`${String(r.time.getHours()).padStart(2,'0')}:${String(r.time.getMinutes()).padStart(2,'0')}`;(m[k]??=[]).push(r[key])}
- return Object.fromEntries(Object.entries(m).map(([k,v])=>[k,v.filter(Number.isFinite).reduce((a,b)=>a+b,0)/v.filter(Number.isFinite).length]));
-}
-function renderCompare(){
- if(!S.wxRows.length){$('wxStatus').textContent='尚未匯入枋山資料';return}
- const cr=currentRows();const wr=S.wxRows.filter(w=>cr.length&&w.time>=cr[0].time&&w.time<=cr[cr.length-1].time);
- const ct=sample(cr),wt=sample(wr);
- chart('cmpT','compareTemp',ct.map(r=>dt(r.time)),[
-   {label:'箱內',data:ct.map(r=>r.temp),borderWidth:1.4},
-   {label:'枋山',data:wt.length===ct.length?wt.map(r=>r.temp):ct.map(r=>null),borderWidth:1.4}
- ],'°C');
- chart('cmpH','compareHum',ct.map(r=>dt(r.time)),[
-   {label:'箱內',data:ct.map(r=>r.hum),borderWidth:1.4},
-   {label:'枋山',data:wt.length===ct.length?wt.map(r=>r.hum):ct.map(r=>null),borderWidth:1.4}
- ],'%RH');
- $('wxStatus').textContent=`已匯入枋山資料 ${S.wxRows.length.toLocaleString()} 筆`;
-}
-function detectEvents(){
- const e=[],tc=+$('thrCo2').value,tt=+$('thrTemp').value,th=+$('thrHum').value;
- for(let i=1;i<S.scdRows.length;i++){
-   const a=S.scdRows[i-1],b=S.scdRows[i];
-   if((b.time-a.time)>60*60*1000)continue;
-   const items=[['CO₂突升','co2',tc,true],['溫度變化','temp',tt,false],['濕度變化','hum',th,false]];
-   for(const [name,k,thr,positive] of items){
-     if(a[k]==null||b[k]==null)continue;const d=b[k]-a[k];
-     if((positive&&d>=thr)||(!positive&&Math.abs(d)>=thr))e.push({time:b.time,color:getColor(ymd(b.time)),type:name,prev:a[k],now:b[k],delta:d,file:b.file,key:k});
-   }
- }
- return e;
-}
-function renderEvents(){
- const ev=detectEvents();$('eventCount').textContent=`${ev.length} 筆`;
- $('eventBody').innerHTML=ev.slice(0,2000).map(x=>`<tr><td>${dt(x.time)}</td><td>${x.color}</td><td>${x.type}</td><td>${x.prev}</td><td>${x.now}</td><td>${x.delta.toFixed(2)}</td><td>${x.file}</td></tr>`).join('');
-}
-function renderAll(){if(!S.scdRows.length)return;renderCurrent();renderDaily();renderOverlay();renderCompare();renderEvents()}
-
-$('saveSettings').onclick=()=>{
- const ids=['yellowStart','yellowEnd','blueStart','blueEnd','greenStart','greenEnd','redStart','redEnd','warmStart','warmEnd','thrCo2','thrTemp','thrHum'];
- localStorage.setItem('scd30v2settings',JSON.stringify(Object.fromEntries(ids.map(id=>[id,$(id).value]))));
- alert('設定已儲存在這個瀏覽器。');
-};
-(function loadSettings(){
- try{const o=JSON.parse(localStorage.getItem('scd30v2settings')||'{}');for(const [k,v] of Object.entries(o))if($(k))$(k).value=v}catch(e){}
-})();
-
-$('clearAll').onclick=()=>{
- S.scdTables=[];S.wxTables=[];S.scdRows=[];S.wxRows=[];S.charts={};
- $('analysis').classList.add('hidden');$('scdInfo').textContent='尚未載入。';$('wxInfo').textContent='可選，不匯入也能分析箱內資料。';$('rowsPill').textContent='0 筆箱內資料';
- $('scdInput').value='';$('wxInput').value='';
-};
-
-function exportDailyRows(){
- return dailySummaries().map(x=>({
-  日期:x.date,光色:x.color,筆數:x.count,
-  '箱內溫度平均(°C)':x.t.avg,'箱內最高溫(°C)':x.t.max,'最高溫時間':dt(x.t.maxT),'箱內最低溫(°C)':x.t.min,'最低溫時間':dt(x.t.minT),
-  '箱內濕度平均(%RH)':x.h.avg,'箱內最高濕度(%RH)':x.h.max,'最高濕度時間':dt(x.h.maxT),'箱內最低濕度(%RH)':x.h.min,'最低濕度時間':dt(x.h.minT),
-  'CO2平均(ppm)':x.c.avg,'CO2最高(ppm)':x.c.max,'CO2最高時間':dt(x.c.maxT),'CO2最低(ppm)':x.c.min,'CO2最低時間':dt(x.c.minT),
-  '枋山平均溫度(°C)':x.wxT,'ΔT(°C)':x.dT,'枋山平均濕度(%RH)':x.wxH,'ΔRH(%RH)':x.dRH
- }));
-}
-$('exportExcel').onclick=()=>{
- const wb=XLSX.utils.book_new();
- const raw=S.scdRows.map(r=>({時間:dt(r.time),日期:ymd(r.time),光色:getColor(ymd(r.time)),'溫度(°C)':r.temp,'濕度(%RH)':r.hum,'CO2(ppm)':r.co2,來源檔案:r.file}));
- XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(raw),'箱內合併原始資料');
- XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(exportDailyRows()),'每日10-22統計');
- if(S.wxRows.length){
-   const wx=S.wxRows.map(r=>({時間:dt(r.time),'枋山溫度(°C)':r.temp,'枋山濕度(%RH)':r.hum,來源檔案:r.file}));
-   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(wx),'枋山原始資料');
- }
- const ev=detectEvents().map(x=>({時間:dt(x.time),光色:x.color,類型:x.type,前值:x.prev,目前值:x.now,變化量:x.delta,來源檔案:x.file}));
- XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ev),'異常事件');
- const cr=currentRows(),cs=[{
-   分析模式:S.view,開始:cr.length?dt(cr[0].time):'',結束:cr.length?dt(cr[cr.length-1].time):'',筆數:cr.length,
-   '溫度平均':stats(cr,'temp').avg,'溫度最高':stats(cr,'temp').max,'溫度最低':stats(cr,'temp').min,
-   '濕度平均':stats(cr,'hum').avg,'濕度最高':stats(cr,'hum').max,'濕度最低':stats(cr,'hum').min,
-   'CO2平均':stats(cr,'co2').avg,'CO2最高':stats(cr,'co2').max,'CO2最低':stats(cr,'co2').min
- }];
- XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(cs),'目前區間統計');
- XLSX.writeFile(wb,`SCD30_Log_Analyzer_V2_${ymd(new Date())}.xlsx`);
-};
+'use strict';
+const $=id=>document.getElementById(id),S={scdTables:[],wxTables:[],scdRows:[],wxRows:[],charts:{},view:'daily'};
+const COLORS={temp:'#ef4444',hum:'#2563eb',co2:'#16a34a',黃光:'#facc15',藍光:'#2563eb',綠光:'#16a34a',紅光:'#ef4444',暖白光:'#f5deb3',未設定:'#94a3b8'};
+const pad=n=>String(n).padStart(2,'0'),ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,time24=d=>`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`,dt=d=>d instanceof Date&&!isNaN(d)?`${ymd(d)} ${time24(d)}`:'';
+function parseDate(v){if(v instanceof Date)return v;if(typeof v==='number'&&v>20000&&v<80000)return new Date(Math.round((v-25569)*86400*1000));let s=String(v??'').trim();if(!s)return null;s=s.replace(/\//g,'-').replace(/T/,' ');let d=new Date(s);if(!isNaN(d))return d;const m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})[ ](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);return m?new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0)):null}
+function num(v){if(v==null)return null;const n=Number(String(v).replace(/,/g,'').replace(/[^0-9eE+\-.]/g,''));return Number.isFinite(n)?n:null}
+function parseCSV(text){text=text.replace(/^\uFEFF/,'');const rows=[];let row=[],cell='',q=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'){if(q&&n==='"'){cell+='"';i++}else q=!q}else if(c===','&&!q){row.push(cell);cell=''}else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&n==='\n')i++;row.push(cell);if(row.some(x=>x.trim()!==''))rows.push(row);row=[];cell=''}else cell+=c}if(cell||row.length){row.push(cell);rows.push(row)}if(!rows.length)return{headers:[],rows:[]};const headers=rows[0].map((x,i)=>x.trim()||`欄位${i+1}`);return{headers,rows:rows.slice(1).map(a=>Object.fromEntries(headers.map((h,i)=>[h,a[i]??''])))} }
+function guess(headers,type){const keys={time:['datetime','timestamp','date time','日期時間','時間','日期'],temp:['temperature','temp','溫度'],hum:['humidity','rh','濕度'],co2:['co2','co₂','carbon dioxide','二氧化碳']}[type];return headers.find(h=>keys.some(k=>h.toLowerCase().replace(/[()_%]/g,'').includes(k)))||headers[0]||''}
+function fillSelect(id,headers,type){const el=$(id);el.innerHTML=headers.map(h=>`<option value="${h.replace(/"/g,'&quot;')}">${h}</option>`).join('');const g=guess(headers,type);if(headers.includes(g))el.value=g}
+async function filesToTables(files){const out=[];for(const f of files){out.push({name:f.name,...parseCSV(await f.text())})}return out}
+function bindDrop(dropId,inputId,handler){const d=$(dropId),i=$(inputId);d.onclick=()=>i.click();['dragenter','dragover'].forEach(e=>d.addEventListener(e,x=>{x.preventDefault();d.classList.add('drag')}));['dragleave','drop'].forEach(e=>d.addEventListener(e,x=>{x.preventDefault();d.classList.remove('drag')}));d.addEventListener('drop',e=>handler([...e.dataTransfer.files].filter(f=>f.name.toLowerCase().endsWith('.csv'))));i.onchange=()=>handler([...i.files])}
+function buildRows(tables,map){const a=[];for(const t of tables)for(const r of t.rows){const time=parseDate(r[map.time]),temp=num(r[map.temp]),hum=num(r[map.hum]),co2=map.co2?num(r[map.co2]):null;if(time)a.push({time,temp,hum,co2,file:t.name})}return a.sort((a,b)=>a.time-b.time)}
+async function loadScd(files){if(!files.length)return;S.scdTables=await filesToTables(files);const h=S.scdTables[0].headers;fillSelect('mTime',h,'time');fillSelect('mTemp',h,'temp');fillSelect('mHum',h,'hum');fillSelect('mCo2',h,'co2');$('scdMap').classList.remove('hidden');applyScd()}
+async function loadWx(files){if(!files.length)return;S.wxTables=await filesToTables(files);const h=S.wxTables[0].headers;fillSelect('wTime',h,'time');fillSelect('wTemp',h,'temp');fillSelect('wHum',h,'hum');$('wxMap').classList.remove('hidden');applyWx()}
+function applyScd(){S.scdRows=buildRows(S.scdTables,{time:$('mTime').value,temp:$('mTemp').value,hum:$('mHum').value,co2:$('mCo2').value});$('scdInfo').textContent=`已讀取 ${S.scdRows.length.toLocaleString()} 筆`;$('rowsPill').textContent=`${S.scdRows.length.toLocaleString()} 筆箱內資料`;setupDates();$('analysis').classList.toggle('hidden',!S.scdRows.length);renderAll()}
+function applyWx(){S.wxRows=buildRows(S.wxTables,{time:$('wTime').value,temp:$('wTemp').value,hum:$('wHum').value});$('wxInfo').textContent=`已讀取 ${S.wxRows.length.toLocaleString()} 筆枋山資料`;renderAll()}
+bindDrop('scdDrop','scdInput',loadScd);bindDrop('wxDrop','wxInput',loadWx);$('applyScdMap').onclick=applyScd;$('applyWxMap').onclick=applyWx;
+const LIGHTS=['黃光','藍光','綠光','紅光','暖白光'];
+function addLight(data={}){const row=document.createElement('div');row.className='light-row';row.innerHTML=`<div class="field"><label>光色</label><select class="lc">${LIGHTS.map(x=>`<option>${x}</option>`).join('')}</select></div><div class="field"><label>開始日期</label><input class="ls" type="date"></div><div class="field"><label>結束日期</label><input class="le" type="date"></div><button class="danger" type="button">刪除</button>`;row.querySelector('.lc').value=data.color||'黃光';row.querySelector('.ls').value=data.start||'';row.querySelector('.le').value=data.end||'';row.querySelectorAll('select,input').forEach(x=>x.onchange=renderAll);row.querySelector('button').onclick=()=>{row.remove();renderAll()};$('lightRows').appendChild(row)}
+function ranges(){return[...document.querySelectorAll('.light-row')].map(r=>({color:r.querySelector('.lc').value,start:r.querySelector('.ls').value,end:r.querySelector('.le').value})).filter(x=>x.start&&x.end)}
+function lightOf(date){for(const r of ranges())if(date>=r.start&&date<=r.end)return r.color;return'未設定'}
+$('addLight').onclick=()=>addLight();addLight();
+function expMin(){const p=v=>v.split(':').map(Number),a=p($('expStart').value),b=p($('expEnd').value);return[a[0]*60+a[1],b[0]*60+b[1]]}function inExp(d){const[a,b]=expMin(),x=d.getHours()*60+d.getMinutes();return a===b?true:a<b?x>=a&&x<b:x>=a||x<b}
+function valid(r){return Number.isFinite(r.temp)&&r.temp>=+$('tMin').value&&r.temp<=+$('tMax').value&&Number.isFinite(r.hum)&&r.hum>=+$('hMin').value&&r.hum<=+$('hMax').value&&Number.isFinite(r.co2)&&r.co2>=+$('cMin').value&&r.co2<=+$('cMax').value}function validRows(){return S.scdRows.filter(valid)}
+function quality(){if(!S.scdRows.length){$('quality').textContent='尚未匯入資料';return}const ok=validRows().length,bad=S.scdRows.length-ok;$('quality').innerHTML=`有效資料：<b>${ok.toLocaleString()}</b> 筆｜超出合理範圍排除：<b>${bad.toLocaleString()}</b> 筆`}
+function setupDates(){const ds=[...new Set(validRows().map(r=>ymd(r.time)))];for(const id of['dateSel','expDateSel'])$(id).innerHTML=ds.map(d=>`<option>${d}</option>`).join('');if(ds.length){$('overlayStart').value=ds[0];$('overlayEnd').value=ds.at(-1);$('customStart').value=`${ds[0]}T00:00`;$('customEnd').value=`${ds.at(-1)}T23:59`}}
+function currentRows(){const a=validRows();if(S.view==='overall')return a;if(S.view==='daily')return a.filter(r=>ymd(r.time)===$('dateSel').value);if(S.view==='experiment')return a.filter(r=>ymd(r.time)===$('expDateSel').value&&inExp(r.time));const s=new Date($('customStart').value),e=new Date($('customEnd').value);return a.filter(r=>r.time>=s&&r.time<=e)}
+function stats(rows,key){const a=rows.filter(r=>Number.isFinite(r[key]));if(!a.length)return{avg:null,max:null,min:null,maxT:null,minT:null};let sum=0,max=a[0],min=a[0];for(const r of a){sum+=r[key];if(r[key]>max[key])max=r;if(r[key]<min[key])min=r}return{avg:sum/a.length,max:max[key],min:min[key],maxT:max.time,minT:min.time}}
+function fm(k,v){if(v==null||!Number.isFinite(v))return'—';return k==='temp'?`${v.toFixed(2)} °C`:k==='hum'?`${v.toFixed(2)} %RH`:`${v.toFixed(0)} ppm`}
+function sample(rows,max=3500){if(rows.length<=max)return rows;const step=Math.ceil(rows.length/max);return rows.filter((_,i)=>i%step===0)}
+function chart(key,id,labels,datasets,unit){S.charts[key]?.destroy();S.charts[key]=new Chart($(id),{type:'line',data:{labels,datasets:datasets.map(d=>({...d,pointRadius:0,tension:.08,fill:false}))},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true}},scales:{x:{ticks:{maxTicksLimit:10}},y:{title:{display:true,text:unit}}}}})}
+function renderCurrent(){const r=currentRows();if(!r.length){['tempKpi','humKpi','co2Kpi'].forEach(id=>$(id).textContent='—');$('statBody').innerHTML='';return}const t=stats(r,'temp'),h=stats(r,'hum'),c=stats(r,'co2'),lights=[...new Set(r.map(x=>lightOf(ymd(x.time))))];$('lightKpi').textContent=lights.length===1?lights[0]:'多種/未設定';$('lightDetail').textContent=lights.join('、');$('tempKpi').textContent=fm('temp',t.avg);$('tempDetail').textContent=`最高 ${fm('temp',t.max)}｜最低 ${fm('temp',t.min)}`;$('humKpi').textContent=fm('hum',h.avg);$('humDetail').textContent=`最高 ${fm('hum',h.max)}｜最低 ${fm('hum',h.min)}`;$('co2Kpi').textContent=fm('co2',c.avg);$('co2Detail').textContent=`最高 ${fm('co2',c.max)}｜最低 ${fm('co2',c.min)}`;$('rangeLabel').textContent=`${dt(r[0].time)} ～ ${dt(r.at(-1).time)}｜${r.length.toLocaleString()} 筆`;$('statBody').innerHTML=[['temp','溫度',t],['hum','濕度',h],['co2','CO₂',c]].map(([k,n,s])=>`<tr><td><b>${n}</b></td><td>${fm(k,s.avg)}</td><td>${fm(k,s.max)}</td><td>${dt(s.maxT)}</td><td>${fm(k,s.min)}</td><td>${dt(s.minT)}</td></tr>`).join('');const sr=sample(r),labels=sr.map(x=>(S.view==='daily'||S.view==='experiment')?time24(x.time):dt(x.time));chart('temp','tempChart',labels,[{label:'箱內溫度',data:sr.map(x=>x.temp),borderColor:COLORS.temp,backgroundColor:COLORS.temp,borderWidth:1.5}],'°C');chart('hum','humChart',labels,[{label:'箱內濕度',data:sr.map(x=>x.hum),borderColor:COLORS.hum,backgroundColor:COLORS.hum,borderWidth:1.5}],'%RH');chart('co2','co2Chart',labels,[{label:'CO₂',data:sr.map(x=>x.co2),borderColor:COLORS.co2,backgroundColor:COLORS.co2,borderWidth:1.5}],'ppm')}
+function wxAvg(date,key){const a=S.wxRows.filter(r=>ymd(r.time)===date&&inExp(r.time)&&Number.isFinite(r[key]));return a.length?a.reduce((s,r)=>s+r[key],0)/a.length:null}
+function summaries(){const g={};for(const r of validRows()){const d=ymd(r.time);(g[d]??=[]).push(r)}return Object.keys(g).sort().map(date=>{const rows=g[date].filter(r=>inExp(r.time)),t=stats(rows,'temp'),h=stats(rows,'hum'),c=stats(rows,'co2'),wt=wxAvg(date,'temp'),wh=wxAvg(date,'hum');return{date,light:lightOf(date),rows,t,h,c,wt,wh,dT:t.avg!=null&&wt!=null?t.avg-wt:null,dH:h.avg!=null&&wh!=null?h.avg-wh:null}})}
+function renderDaily(){$('dailyBody').innerHTML=summaries().map(x=>`<tr><td>${x.date}</td><td>${x.light}</td><td>${x.rows.length}</td><td>${fm('temp',x.t.avg)}</td><td>${fm('temp',x.t.max)}</td><td>${dt(x.t.maxT)}</td><td>${fm('temp',x.t.min)}</td><td>${dt(x.t.minT)}</td><td>${fm('hum',x.h.avg)}</td><td>${fm('co2',x.c.avg)}</td><td>${x.wt==null?'—':x.wt.toFixed(2)}</td><td>${x.dT==null?'—':x.dT.toFixed(2)}</td><td>${x.wh==null?'—':x.wh.toFixed(2)}</td><td>${x.dH==null?'—':x.dH.toFixed(2)}</td></tr>`).join('')}
+function renderOverlay(){const metric=$('overlayMetric').value,a=$('overlayStart').value,b=$('overlayEnd').value,dates=[...new Set(validRows().map(r=>ymd(r.time)))].filter(d=>d>=a&&d<=b),labels=[];const maps=dates.map(date=>{const m=new Map();for(const r of validRows().filter(x=>ymd(x.time)===date&&inExp(x.time))){const k=time24(r.time);m.set(k,r[metric]);labels.push(k)}return{date,m}});const xs=[...new Set(labels)].sort();const ds=maps.map(x=>{const l=lightOf(x.date),c=COLORS[l]||COLORS.未設定;return{label:`${x.date} ${l}`,data:xs.map(k=>x.m.get(k)??null),borderColor:c,backgroundColor:c,borderWidth:1.4,spanGaps:true}});chart('overlay','overlayChart',xs,ds,metric==='temp'?'°C':metric==='hum'?'%RH':'ppm')}
+function minuteMap(rows,key){const g={};for(const r of rows){const k=`${ymd(r.time)} ${pad(r.time.getHours())}:${pad(r.time.getMinutes())}`;(g[k]??=[]).push(r[key])}return new Map(Object.entries(g).map(([k,a])=>[k,a.filter(Number.isFinite).reduce((s,v)=>s+v,0)/a.filter(Number.isFinite).length]))}
+function renderCompare(){if(!S.wxRows.length){S.charts.cmpT?.destroy();S.charts.cmpH?.destroy();return}const cr=currentRows();if(!cr.length)return;const wr=S.wxRows.filter(w=>w.time>=cr[0].time&&w.time<=cr.at(-1).time),tm=minuteMap(cr,'temp'),wm=minuteMap(wr,'temp'),hm=minuteMap(cr,'hum'),wh=minuteMap(wr,'hum'),keys=[...new Set([...tm.keys(),...wm.keys(),...hm.keys(),...wh.keys()])].sort(),short=keys.map(k=>k.slice(11));chart('cmpT','cmpTemp',short,[{label:'箱內',data:keys.map(k=>tm.get(k)??null),borderColor:COLORS.temp,borderWidth:1.4,spanGaps:true},{label:'枋山',data:keys.map(k=>wm.get(k)??null),borderColor:'#f59e0b',borderWidth:1.4,spanGaps:true}],'°C');chart('cmpH','cmpHum',short,[{label:'箱內',data:keys.map(k=>hm.get(k)??null),borderColor:COLORS.hum,borderWidth:1.4,spanGaps:true},{label:'枋山',data:keys.map(k=>wh.get(k)??null),borderColor:'#06b6d4',borderWidth:1.4,spanGaps:true}],'%RH')}
+function events(){const a=validRows(),out=[];for(let i=1;i<a.length;i++){const p=a[i-1],r=a[i];if(r.time-p.time>3600000)continue;for(const [type,key,thr,pos] of[['CO₂突升','co2',+$('thrC').value,true],['溫度變化','temp',+$('thrT').value,false],['濕度變化','hum',+$('thrH').value,false]]){const d=r[key]-p[key];if((pos&&d>=thr)||(!pos&&Math.abs(d)>=thr))out.push({time:r.time,light:lightOf(ymd(r.time)),type,prev:p[key],now:r[key],delta:d,file:r.file})}}return out}
+function renderEvents(){const e=events();$('eventCount').textContent=`${e.length.toLocaleString()} 筆`;$('eventBody').innerHTML=e.slice(0,2000).map(x=>`<tr><td>${dt(x.time)}</td><td>${x.light}</td><td>${x.type}</td><td>${x.prev}</td><td>${x.now}</td><td>${x.delta.toFixed(2)}</td><td>${x.file}</td></tr>`).join('')}
+function renderAll(){quality();if(!S.scdRows.length)return;$('expBadge').textContent=`LED 實驗時段：${$('expStart').value}–${$('expEnd').value}`;renderCurrent();renderDaily();renderOverlay();renderCompare();renderEvents()}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));S.view=b.dataset.view;$('dailyCtrl').classList.toggle('hidden',S.view!=='daily');$('customCtrl').classList.toggle('hidden',S.view!=='custom');$('expCtrl').classList.toggle('hidden',S.view!=='experiment');renderAll()});$('dateSel').onchange=renderAll;$('expDateSel').onchange=renderAll;$('applyCustom').onclick=renderAll;$('drawOverlay').onclick=renderOverlay;$('overlayMetric').onchange=renderOverlay;['expStart','expEnd','tMin','tMax','hMin','hMax','cMin','cMax','thrC','thrT','thrH'].forEach(id=>$(id).onchange=()=>{setupDates();renderAll()});
+$('saveSettings').onclick=()=>{const o={expStart:$('expStart').value,expEnd:$('expEnd').value,tMin:$('tMin').value,tMax:$('tMax').value,hMin:$('hMin').value,hMax:$('hMax').value,cMin:$('cMin').value,cMax:$('cMax').value,thrC:$('thrC').value,thrT:$('thrT').value,thrH:$('thrH').value,ranges:ranges()};localStorage.setItem('scd30-v3-settings',JSON.stringify(o));alert('設定已儲存。')};
+(function(){try{const o=JSON.parse(localStorage.getItem('scd30-v3-settings')||'{}');for(const id of['expStart','expEnd','tMin','tMax','hMin','hMax','cMin','cMax','thrC','thrT','thrH'])if(o[id]!=null)$(id).value=o[id];if(Array.isArray(o.ranges)&&o.ranges.length){$('lightRows').innerHTML='';o.ranges.forEach(addLight)}}catch(e){}})();
+$('clearAll').onclick=()=>{S.scdTables=[];S.wxTables=[];S.scdRows=[];S.wxRows=[];Object.values(S.charts).forEach(c=>c?.destroy());S.charts={};$('analysis').classList.add('hidden');$('scdInfo').textContent='尚未載入。';$('wxInfo').textContent='未匯入也可分析箱內資料。';$('rowsPill').textContent='0 筆箱內資料';$('quality').textContent='尚未匯入資料';$('scdInput').value='';$('wxInput').value=''};
+async function ensureXLSX(){if(window.XLSX)return true;for(const url of['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js','https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js']){try{await new Promise((ok,bad)=>{const s=document.createElement('script');s.src=url;s.onload=ok;s.onerror=bad;document.head.appendChild(s)});if(window.XLSX)return true}catch(e){}}return false}
+$('exportExcel').onclick=async()=>{try{$('excelStatus').textContent='準備 Excel…';if(!(await ensureXLSX()))throw new Error('Excel 模組載入失敗，請確認網路連線');const wb=XLSX.utils.book_new(),raw=validRows().map(r=>({時間:dt(r.time),日期:ymd(r.time),光色:lightOf(ymd(r.time)),'溫度(°C)':r.temp,'濕度(%RH)':r.hum,'CO2(ppm)':r.co2,來源檔案:r.file}));XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(raw),'箱內合併原始資料');const daily=summaries().map(x=>({日期:x.date,光色:x.light,筆數:x.rows.length,'溫度平均(°C)':x.t.avg,'溫度最高(°C)':x.t.max,最高溫時間:dt(x.t.maxT),'溫度最低(°C)':x.t.min,最低溫時間:dt(x.t.minT),'濕度平均(%RH)':x.h.avg,'CO2平均(ppm)':x.c.avg,'枋山溫度(°C)':x.wt,'ΔT(°C)':x.dT,'枋山濕度(%RH)':x.wh,'ΔRH(%RH)':x.dH}));XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(daily),'每日實驗時段統計');if(S.wxRows.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.wxRows.map(r=>({時間:dt(r.time),'枋山溫度(°C)':r.temp,'枋山濕度(%RH)':r.hum,來源檔案:r.file}))),'枋山原始資料');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(events().map(x=>({時間:dt(x.time),光色:x.light,類型:x.type,前值:x.prev,目前值:x.now,變化量:x.delta,來源檔案:x.file}))),'異常事件');const settings=ranges().map(x=>({光色:x.color,開始日期:x.start,結束日期:x.end,LED開始時間:$('expStart').value,LED結束時間:$('expEnd').value}));if(!settings.length)settings.push({光色:'未設定',開始日期:'',結束日期:'',LED開始時間:$('expStart').value,LED結束時間:$('expEnd').value});XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(settings),'實驗設定');XLSX.writeFile(wb,`SCD30_分析_${ymd(new Date())}.xlsx`);$('excelStatus').textContent='✓ Excel 匯出完成'}catch(e){console.error(e);$('excelStatus').textContent='⚠ Excel 匯出失敗';alert(e.message)}};
+window.addEventListener('load',async()=>{$('excelStatus').textContent=(await ensureXLSX())?'✓ Excel 模組已就緒':'⚠ Excel 模組載入失敗';$('expBadge').textContent=`LED 實驗時段：${$('expStart').value}–${$('expEnd').value}`});
 </script>
 </body>
 </html>
