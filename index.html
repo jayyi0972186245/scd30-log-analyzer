@@ -89,6 +89,12 @@ function reducePoints(points,limit=2400){
  output.push(points[Math.min(min,max)]);if(min!==max)output.push(points[Math.max(min,max)]);}
  output.push(points.at(-1));return output;
 }
+function reduceCombinedRows(rows,limit=2400){
+ if(rows.length<=limit)return rows;
+ const metrics=['temp','hum','co2'],keep=new Set([0,rows.length-1]),buckets=Math.max(1,Math.floor((limit-2)/(metrics.length*2))),step=(rows.length-2)/buckets;
+ for(let b=0;b<buckets;b++){const start=1+Math.floor(b*step),end=Math.min(rows.length-1,1+Math.floor((b+1)*step));for(const metric of metrics){let min=start,max=start;for(let i=start+1;i<end;i++){if(rows[i][metric]<rows[min][metric])min=i;if(rows[i][metric]>rows[max][metric])max=i}keep.add(min);keep.add(max)}}
+ return[...keep].sort((a,b)=>a-b).map(i=>rows[i]);
+}
 
 async function parseImportFiles(files){
  const tables=[];
@@ -135,10 +141,11 @@ function chart(key,id,labels,datasets,unit,axis){
  if(S.charts[key]){S.charts[key].data=data;S.charts[key].options=options;S.charts[key].update('none')}
  else S.charts[key]=new Chart($(id),{type:'line',data,options});
 }
+const combinedHoverLine={id:'combinedHoverLine',afterDraw(chart){const tooltip=chart.tooltip;if(!tooltip||tooltip.opacity===0||!tooltip.dataPoints?.length)return;const x=tooltip.dataPoints[0].element.x,{top,bottom}=chart.chartArea,{ctx}=chart;ctx.save();ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);ctx.lineWidth=1;ctx.strokeStyle='rgba(71,84,103,.55)';ctx.setLineDash([4,4]);ctx.stroke();ctx.restore()}};
 function renderCombined(rows){
- const datasets=[['temp','溫度','tempAxis'],['hum','濕度','humAxis'],['co2','CO₂','co2Axis']].map(([metric,label,yAxisID])=>({label,data:reducePoints(rows.map(r=>({x:r.time.getTime(),y:r[metric]})),2400),borderColor:COLORS[metric],backgroundColor:COLORS[metric],borderWidth:1.5,yAxisID,pointRadius:0,tension:0,fill:false}));
- const data={datasets},options={animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'nearest',intersect:false},plugins:{legend:{display:true},tooltip:{callbacks:{title:items=>dt(new Date(items[0]?.parsed.x))}}},scales:{x:{type:'linear',ticks:{maxTicksLimit:10,callback:v=>dt(new Date(v))}},tempAxis:{type:'linear',position:'left',title:{display:true,text:'溫度 °C',color:COLORS.temp},ticks:{color:COLORS.temp},grid:{drawOnChartArea:true}},humAxis:{type:'linear',position:'right',title:{display:true,text:'濕度 %RH',color:COLORS.hum},ticks:{color:COLORS.hum},grid:{drawOnChartArea:false}},co2Axis:{type:'linear',position:'right',offset:true,title:{display:true,text:'CO₂ ppm',color:COLORS.co2},ticks:{color:COLORS.co2},grid:{drawOnChartArea:false}}}};
- if(S.charts.combined){S.charts.combined.data=data;S.charts.combined.options=options;S.charts.combined.update('none')}else S.charts.combined=new Chart($('combinedChart'),{type:'line',data,options});
+ const sharedRows=reduceCombinedRows(rows),datasets=[['temp','溫度','tempAxis'],['hum','濕度','humAxis'],['co2','CO₂','co2Axis']].map(([metric,label,yAxisID])=>({label,_metric:metric,data:sharedRows.map(r=>({x:r.time.getTime(),y:r[metric]})),borderColor:COLORS[metric],backgroundColor:COLORS[metric],borderWidth:1.5,yAxisID,pointRadius:0,tension:0,fill:false}));
+ const data={datasets},options={animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',axis:'x',intersect:false},plugins:{legend:{display:true},tooltip:{position:'nearest',callbacks:{title:items=>dt(new Date(items[0]?.parsed.x)),label:item=>{const metric=item.dataset._metric,value=item.parsed.y;return metric==='temp'?`溫度: ${value.toFixed(2)} °C`:metric==='hum'?`濕度: ${value.toFixed(2)} %RH`:`CO₂: ${value.toFixed(0)} ppm`}}}},scales:{x:{type:'linear',ticks:{maxTicksLimit:10,callback:v=>dt(new Date(v))}},tempAxis:{type:'linear',position:'left',title:{display:true,text:'溫度 °C',color:COLORS.temp},ticks:{color:COLORS.temp},grid:{drawOnChartArea:true}},humAxis:{type:'linear',position:'right',title:{display:true,text:'濕度 %RH',color:COLORS.hum},ticks:{color:COLORS.hum},grid:{drawOnChartArea:false}},co2Axis:{type:'linear',position:'right',offset:true,title:{display:true,text:'CO₂ ppm',color:COLORS.co2},ticks:{color:COLORS.co2},grid:{drawOnChartArea:false}}}};
+ if(S.charts.combined){S.charts.combined.data=data;S.charts.combined.options=options;S.charts.combined.update('none')}else S.charts.combined=new Chart($('combinedChart'),{type:'line',data,options,plugins:[combinedHoverLine]});
 }
 function chartExportTag(){if(S.view==='daily')return $('dateSel').value||'每日';if(S.view==='experiment')return `${$('expDateSel').value||'日期'}_實驗時段`;return S.view==='custom'?'自訂時間':'整體時間'}
 function fitCanvasText(ctx,text,maxWidth){let value=String(text||'');while(value.length>1&&ctx.measureText(value).width>maxWidth)value=value.slice(0,-1);return value===String(text||'')?value:value+'…'}
