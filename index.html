@@ -56,7 +56,7 @@ bindDrop('scdDrop','scdInput',files=>runBusy(()=>loadScd(files)));bindDrop('wxDr
 // Keep parsing and column conversion off the UI thread. Terminate each worker
 // after the result so its copy of the input tables can be collected.
 function backgroundJob(type,payload){
- const source=[parseCSV,parseDate,num,guess,buildRows,parseImportFiles].map(fn=>fn.toString()).join('\n')+`
+ const source=[parseCSV,parseDate,num,guess,buildRows,normalizeCwaHourlyTable,parseImportFiles].map(fn=>fn.toString()).join('\n')+`
  self.onmessage=async({data})=>{try{let result;if(data.type==='parse'){result=await parseImportFiles(data.files)}else result=buildRows(data.tables,data.map);self.postMessage({result})}catch(error){self.postMessage({error:error.message})}};`;
  return new Promise((resolve,reject)=>{let worker,url;const done=()=>{worker?.terminate();if(url)URL.revokeObjectURL(url)};
  try{url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));worker=new Worker(url);worker.onmessage=({data})=>{done();data.error?reject(new Error(data.error)):resolve(data.result)};worker.onerror=e=>{done();reject(new Error(e.message||'背景讀取失敗'))};worker.postMessage({type,...payload})}catch(e){done();reject(e)}});
@@ -96,10 +96,18 @@ function reduceCombinedRows(rows,limit=2400){
  return[...keep].sort((a,b)=>a-b).map(i=>rows[i]);
 }
 
+function normalizeCwaHourlyTable(table,fileName){
+ const hourHeader=table.headers.find(h=>/觀測時間.*hour/i.test(h));if(!hourHeader||!table.rows.length)return table;
+ const english=table.headers.map(h=>String(table.rows[0][h]??'').trim()),hourIndex=english.findIndex(h=>/^ObsTime$/i.test(h)),dateMatch=String(fileName).match(/(\d{4})-(\d{2})-(\d{2})/);if(hourIndex<0||!dateMatch)return table;
+ const headers=['時間',...english.map((h,i)=>h||table.headers[i])],rows=[];
+ for(const source of table.rows.slice(1)){const row={};for(let i=0;i<table.headers.length;i++)row[headers[i+1]]=source[table.headers[i]]??'';const hour=Number(row[headers[hourIndex+1]]);if(!Number.isInteger(hour)||hour<0||hour>24)continue;const time=new Date(+dateMatch[1],+dateMatch[2]-1,+dateMatch[3],hour===24?0:hour,0,0);if(hour===24)time.setDate(time.getDate()+1);row.時間=time;rows.push(row)}
+ return{name:table.name,headers,date1904:false,rows};
+}
+
 async function parseImportFiles(files){
  const tables=[];
  for(const file of files){
-  if(/\.csv$/i.test(file.name)){const table=parseCSV(await file.text());if(table.rows.length)tables.push({name:file.name,...table});continue}
+  if(/\.csv$/i.test(file.name)){const parsed=parseCSV(await file.text()),table=normalizeCwaHourlyTable({name:file.name,...parsed},file.name);if(table.rows.length)tables.push(table);continue}
   if(!self.XLSX){
    for(const url of ['https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js','https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js']){try{importScripts(url);if(self.XLSX)break}catch(e){}}
    if(!self.XLSX)throw new Error('Excel 讀取模組載入失敗，請確認網路後再試。');
@@ -135,7 +143,7 @@ function stats(rows,key){const a=rows.filter(r=>Number.isFinite(r[key]));if(!a.l
 function fm(k,v){if(v==null||!Number.isFinite(v))return'—';return k==='temp'?`${v.toFixed(2)} °C`:k==='hum'?`${v.toFixed(2)} %RH`:`${v.toFixed(0)} ppm`}
 function sample(rows,max=3500){if(rows.length<=max)return rows;const step=Math.ceil(rows.length/max);return rows.filter((_,i)=>i%step===0)}
 function chart(key,id,labels,datasets,unit,axis){
- const data={labels,datasets:datasets.map(d=>({...d,pointRadius:0,tension:0,fill:false}))};
+ const data={labels,datasets:datasets.map(d=>({...d,pointRadius:d.pointRadius??0,tension:d.tension??0,fill:d.fill??false}))};
  const x=axis?{type:'linear',ticks:{maxTicksLimit:10,callback:v=>axis==='clock'?pad(Math.floor(v/3600))+':'+pad(Math.floor(v%3600/60)):dt(new Date(v))}}:{ticks:{maxTicksLimit:10}};
  const options={animation:false,responsive:true,maintainAspectRatio:false,interaction:{mode:axis?'nearest':'index',intersect:false},plugins:{legend:{display:true},tooltip:axis?{callbacks:{title:items=>{const v=items[0]?.parsed.x;return axis==='clock'?pad(Math.floor(v/3600))+':'+pad(Math.floor(v%3600/60))+':'+pad(Math.floor(v%60)):dt(new Date(v))}}}:{}},scales:{x,y:{title:{display:true,text:unit}}}};
  if(S.charts[key]){S.charts[key].data=data;S.charts[key].options=options;S.charts[key].update('none')}
@@ -187,7 +195,7 @@ function renderCompare(){
  const cr=currentRows();if(!S.wxRows.length||!cr.length){for(const key of ['cmpT','cmpH']){S.charts[key]?.destroy();delete S.charts[key]}return}
  const wr=S.wxRows.filter(w=>w.time>=cr[0].time&&w.time<=cr.at(-1).time);
  for(const [metric,key,id,color,unit] of [['temp','cmpT','cmpTemp','#f59e0b','°C'],['hum','cmpH','cmpHum','#06b6d4','%RH']]){
- const ds=[[cr,'箱內',COLORS[metric]],[wr,'枋山',color]].map(([rows,label,c])=>({label,data:reducePoints([...minuteMap(rows,metric)].sort((a,b)=>a[0]-b[0]).map(([x,y])=>({x,y})),2400),borderColor:c,borderWidth:1.4,spanGaps:true}));
+ const ds=[[cr,'箱內',COLORS[metric]],[wr,'枋山',color]].map(([rows,label,c])=>({label,data:reducePoints([...minuteMap(rows,metric)].sort((a,b)=>a[0]-b[0]).map(([x,y])=>({x,y})),2400),borderColor:c,backgroundColor:c,borderWidth:label==='枋山'?2.2:1.4,pointRadius:label==='枋山'?2.5:0,pointHoverRadius:label==='枋山'?5:3,spanGaps:true}));
  chart(key,id,[],ds,unit,'date');}
 }
 function events(){const cache=analysisCache();if(cache.events)return cache.events;const a=cache.rows,out=[];for(let i=1;i<a.length;i++){const p=a[i-1],r=a[i];if(r.time-p.time>3600000)continue;for(const [type,key,thr,pos] of[['CO₂突升','co2',+$('thrC').value,true],['溫度變化','temp',+$('thrT').value,false],['濕度變化','hum',+$('thrH').value,false]]){const d=r[key]-p[key];if((pos&&d>=thr)||(!pos&&Math.abs(d)>=thr))out.push({time:r.time,light:lightOf(ymd(r.time)),type,prev:p[key],now:r[key],delta:d,file:r.file})}}return cache.events=out}
