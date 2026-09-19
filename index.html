@@ -143,6 +143,23 @@ function currentRows(){return validRows().filter(r=>matchesSelection(r.time))}
 function stats(rows,key){const a=rows.filter(r=>Number.isFinite(r[key]));if(!a.length)return{avg:null,max:null,min:null,maxT:null,minT:null};let sum=0,max=a[0],min=a[0];for(const r of a){sum+=r[key];if(r[key]>max[key])max=r;if(r[key]<min[key])min=r}return{avg:sum/a.length,max:max[key],min:min[key],maxT:max.time,minT:min.time}}
 function fm(k,v){if(v==null||!Number.isFinite(v))return'—';return k==='temp'?`${v.toFixed(2)} °C`:k==='hum'?`${v.toFixed(2)} %RH`:`${v.toFixed(0)} ppm`}
 function sample(rows,max=3500){if(rows.length<=max)return rows;const step=Math.ceil(rows.length/max);return rows.filter((_,i)=>i%step===0)}
+Chart.register({id:'pointValueLabels',afterDatasetsDraw(chart){
+ if($('showPointValues')&&!$('showPointValues').checked)return;
+ const {ctx,chartArea:{left,right,top,bottom}}=chart;
+ ctx.save();ctx.font='bold 11px "Microsoft JhengHei",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ chart.data.datasets.forEach((ds,di)=>{
+ if(ds._band||!chart.isDatasetVisible(di))return;
+ const metric=ds._metric||(/CO[₂2]/i.test(ds.label)?'co2':null),digits=ds._digits??(metric==='co2'?0:2);
+ const color=typeof ds.borderColor==='string'?ds.borderColor:'#344054';
+ chart.getDatasetMeta(di).data.forEach((point,i)=>{
+ const raw=ds.data[i],value=typeof raw==='number'?raw:raw?.y;
+ if(!Number.isFinite(value)||point.skip||!Number.isFinite(point.x)||!Number.isFinite(point.y)||point.x<left||point.x>right||point.y<top||point.y>bottom)return;
+ const text=value.toFixed(digits),half=ctx.measureText(text).width/2+2,x=Math.min(right-half,Math.max(left+half,point.x));
+ const offset=di%2===0?-12:14,y=Math.max(top+7,Math.min(bottom-7,point.y+offset));
+ ctx.lineWidth=3;ctx.strokeStyle='rgba(255,255,255,.95)';ctx.strokeText(text,x,y);ctx.fillStyle=color;ctx.fillText(text,x,y);
+ });
+ });ctx.restore();
+}});
 function trendMode(){return S.filters?.average||'raw'}
 function trendLabel(){return {raw:'原始資料',hour:'每小時平均',day:'每日平均'}[trendMode()]}
 function trendRows(rows){
@@ -339,7 +356,7 @@ function weatherTrend(rows){
  return [...groups.values()].sort((a,b)=>a.time-b.time).map(g=>({time:g.time,temp:g.nt?g.temp/g.nt:null,hum:g.nh?g.hum/g.nh:null,precip:g.np?g.precip:null}));
 }
 (function simplifyControls(){
- const panel=document.createElement('section');panel.className='card';panel.innerHTML='<strong>所有圖表共用設定</strong><div class="controls" style="margin-top:12px"><div class="field"><label>開始日期</label><input id="filterStart" type="date"></div><div class="field"><label>結束日期</label><input id="filterEnd" type="date"></div><button id="filterSingle" class="secondary">單日</button><button id="filterAll" class="secondary">全部日期</button><div class="field"><label>每天時段</label><select id="filterPeriod"><option value="all">全天</option><option value="custom">自訂時段</option></select></div><div id="filterTimes" class="controls hidden"><div class="field"><label>開始時間</label><input id="filterFrom" type="time" value="10:00"></div><div class="field"><label>結束時間（不含）</label><input id="filterTo" type="time" value="22:00"></div></div><div id="averageSlot"></div><button id="applySelection" class="primary">套用全部圖表</button></div><div id="selectionSummary" class="note good" style="margin-top:10px">匯入資料後選擇範圍。</div><div class="small">溫度、濕度與 CO₂ 計算平均；降水量加總。每日平均每個日期只有一點。Excel 預設匯出所選日期與每天時段。</div>';
+ const panel=document.createElement('section');panel.className='card';panel.innerHTML='<strong>所有圖表共用設定</strong><div class="controls" style="margin-top:12px"><div class="field"><label>開始日期</label><input id="filterStart" type="date"></div><div class="field"><label>結束日期</label><input id="filterEnd" type="date"></div><button id="filterSingle" class="secondary">單日</button><button id="filterAll" class="secondary">全部日期</button><div class="field"><label>每天時段</label><select id="filterPeriod"><option value="all">全天</option><option value="custom">自訂時段</option></select></div><div id="filterTimes" class="controls hidden"><div class="field"><label>開始時間</label><input id="filterFrom" type="time" value="10:00"></div><div class="field"><label>結束時間（不含）</label><input id="filterTo" type="time" value="22:00"></div></div><div id="averageSlot"></div><label><input id="showPointValues" type="checkbox" checked style="min-height:0"> 顯示每點數值</label><button id="applySelection" class="primary">套用全部圖表</button></div><div id="selectionSummary" class="note good" style="margin-top:10px">匯入資料後選擇範圍。</div><div class="small">溫度、濕度與 CO₂ 計算平均；降水量加總。每日平均每個日期只有一點。Excel 預設匯出所選日期與每天時段。</div>';
  $('analysis').prepend(panel);
  const avg=$('trendAverage'),old=avg.closest('section');$('averageSlot').append(avg.parentElement);old.remove();
  const legacy=document.querySelector('.tabs').closest('section');legacy.querySelector('.tabs').classList.add('hidden');legacy.querySelector('hr')?.remove();['dailyCtrl','customCtrl','expCtrl'].forEach(id=>$(id).classList.add('hidden'));
@@ -354,7 +371,7 @@ function weatherTrend(rows){
  $('filterPeriod').onchange=()=>$('filterTimes').classList.toggle('hidden',$('filterPeriod').value!=='custom');
  $('filterSingle').onclick=()=>{$('filterEnd').value=$('filterStart').value};
  $('filterAll').onclick=()=>{const rows=validRows();if(rows.length){$('filterStart').value=ymd(rows[0].time);$('filterEnd').value=ymd(rows.at(-1).time)}};
- $('applySelection').onclick=applySelection;$('trendAverage').onchange=null;
+ $('showPointValues').onchange=()=>Object.values(S.charts).forEach(c=>c.update('none'));$('applySelection').onclick=applySelection;$('trendAverage').onchange=null;
 })();
 
 </script>
